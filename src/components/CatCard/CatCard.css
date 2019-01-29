@@ -1,0 +1,21 @@
+.grid-content {
+  position: relative;
+}
+
+.grid-content p {
+  text-align: center;
+  font-weight: bold;
+  margin: 0.5rem 1rem 0 1rem;
+}
+.grid-content img {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.favorite-icon {
+  cursor: pointer;
+  filter: drop-shadow( 1px 1px 2px rgba(0, 0, 0, .7));
+  position: absolute;
+  top: 15px;
+  right: 20px;
+}

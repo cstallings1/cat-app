@@ -1,0 +1,27 @@
+.header {
+  z-index: 1;
+  position: fixed;
+  width: 100%;
+  background: #FFF;
+  height: 50px;
+  display: flex;
+}
+
+.header-title,
+.header-icons {
+  align-items: center;
+  justify-content: center;
+  display: flex;
+}
+
+.header-title {
+  width: 95%;
+}
+
+.header-icons svg {
+  cursor: pointer;
+}
+
+.header-icons .active {
+  color: #4796EC;
+}

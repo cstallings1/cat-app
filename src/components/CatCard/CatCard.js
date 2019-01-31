@@ -1,14 +1,32 @@
 import React, { Component } from 'react';
 import './CatCard.css';
+import ImageModal from '../ImageModal/ImageModal';
 import utils from '../../utils';
 import imagesLoaded from 'imagesloaded';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 class CatCard extends Component {
+  constructor() {
+    super();
+    this.state = {
+      showModal: false,
+    }
+  }
+
   componentDidMount() {
     this.resizeAllGridItems();
     window.addEventListener('resize', this.resizeAllGridItems);
   }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.resizeAllGridItems);
+  }
+
+  toggleModal = () => {
+    this.setState({
+      showModal: !this.state.showModal
+    });
+  };
 
   /** 
    * Set the gridRowEnd property on a given grid item
@@ -30,7 +48,9 @@ class CatCard extends Component {
     let allItems = document.getElementsByClassName('grid-item');
     for (let i = 0; i < allItems.length; i++) {
       imagesLoaded(allItems[i], () => {
-        this.resizeGridItem(allItems[i]);
+        if (allItems[i]) {
+          this.resizeGridItem(allItems[i]);
+        }
       });
     }
   }
@@ -40,17 +60,33 @@ class CatCard extends Component {
     return utils.isFavorite(favorites, this.props.id);
   }
 
+  renderModal = () =>{
+    return (
+      this.state.showModal &&
+      <ImageModal onClose={this.toggleModal}>
+        <CatCard
+          key={this.props.objectkey}
+          id={this.props.id}
+          handleFavoriting={this.props.handleFavoriting}
+          fact={this.props.fact}
+          url={this.props.url}
+        />
+      </ImageModal>
+    )
+  }
+
   render() {
     const { fact, url } = this.props;
     return(
-      <div className='grid-item'>
+      <div className='grid-item' onClick={this.toggleModal}>
+        {this.renderModal()}
         <div className='grid-content'>
           <FontAwesomeIcon
             size='lg'
             className='favorite-icon'
             color='white'
             icon={this.isFavorite() ? ['fas', 'heart'] : ['far', 'heart']}
-            onClick={() => this.props.handleFavoriting(this.props)}
+            onClick={(e) => this.props.handleFavoriting(this.props, e)}
           />
           <img src={url} alt='cat' />
           <p>{fact}</p>

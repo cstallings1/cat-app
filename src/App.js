@@ -62,7 +62,8 @@ class App extends Component {
         id: imageObj.id,
         url: imageObj.url,
         fact: this.state.catFacts[index],
-        lastWord
+        lastWord,
+        key: index,
       };
     });
 
@@ -128,21 +129,28 @@ class App extends Component {
    * Sort by last word or key (to return to original sort order)
    */
   handleSortCats = (sortByLastWord) => {
-    console.log('sorting')
-    const sortParam = sortByLastWord ? 'lastWord' : 'id';
-    let sortedCats = this.state.catObjectArray.sort((a, b) => {
+    const sortParam = sortByLastWord ? 'lastWord' : 'key';
+    const arrayToSort = this.state.displayFavorites ? this.state.favorites : this.state.catObjectArray;
+    let sortedCats = arrayToSort.sort((a, b) => {
       if (a[sortParam] < b[sortParam]) {
         return -1;
-      } else if (a.lastWord > b.lastWord) {
+      } else if (a[sortParam] > b[sortParam]) {
         return 1;
       } else {
         return 0;
       }
     })
 
-    this.setState({
-      catObjectArray: sortedCats,
-    });
+    if (this.state.displayFavorites) {
+      this.setState({
+        favorites: sortedCats,
+      });
+    } else {
+      this.setState({
+        catObjectArray: sortedCats,
+      });
+    }
+
   }
 
   toggleFavorites = (displayFavorites) => {
@@ -161,7 +169,9 @@ class App extends Component {
   /** 
    * Add or remove a favorite from local strorage and update state
    */
-  handleFavoriting = (cardObject) => {
+  handleFavoriting = (cardObject, e) => {
+    e.stopPropagation();
+  
     let favorites = JSON.parse(localStorage.getItem('favorites'));
     if (!utils.isFavorite(favorites, cardObject.id)) {
       const lastWord = utils.getLastWord(cardObject.fact);
@@ -171,6 +181,7 @@ class App extends Component {
         url: cardObject.url,
         fact: cardObject.fact,
         lastWord,
+        key: cardObject.objectKey,
       });
     } else {
       const index = utils.getFavoriteIndex(favorites, cardObject.id);
@@ -193,7 +204,10 @@ class App extends Component {
       return (
         <div className="app">
           <Header sortCats={this.handleSortCats} toggleFavorites={this.toggleFavorites}></Header>
-          <CatList catObjects={this.state.displayFavorites ? this.state.favorites : this.state.catObjectArray} handleFavoriting={this.handleFavoriting}/>
+          <CatList
+            catObjects={this.state.displayFavorites ? this.state.favorites : this.state.catObjectArray}
+            handleFavoriting={this.handleFavoriting}
+            />
         </div>
       );
     }

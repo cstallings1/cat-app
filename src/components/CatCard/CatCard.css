@@ -1,10 +1,11 @@
 .grid-content {
+  cursor: pointer;
   position: relative;
 }
 
 .grid-content p {
   text-align: center;
-  font-weight: bold;
+  font-weight: 500;
   margin: 0.5rem 1rem 0 1rem;
 }
 .grid-content img {

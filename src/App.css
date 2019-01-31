@@ -1,7 +1,8 @@
 p {
-  font-size: 14px;
+  font-size: 1rem;
+  font-family: 'Quicksand', sans-serif;
 }
 
 .padding-right-1x {
-  padding-right: 8px;
+  padding-right: 1rem;
 }

@@ -8,13 +8,14 @@ class CatList extends Component {
     let catCards = [];
     this.props.catObjects.forEach((catObj) => {
       catCards.push(
-        <CatCard
-          handleFavoriting={this.props.handleFavoriting}
-          key={catObj.id}
-          id={catObj.id}
-          fact={catObj.fact}
-          url={catObj.url}
-        />
+          <CatCard
+            handleFavoriting={this.props.handleFavoriting}
+            key={catObj.id}
+            objectKey={catObj.key}
+            id={catObj.id}
+            fact={catObj.fact}
+            url={catObj.url}
+          />
       )
     });
 

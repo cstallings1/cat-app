@@ -3,8 +3,8 @@ import CatList from './components/CatList/CatList';
 import Loading from './components/Loading/Loading';
 import Header from './components/Header/Header';
 import './App.css';
-import { CORS_PROXY, CAT_API_KEY } from './constants';
 import utils from './utils';
+import { fetchImages, fetchFacts } from './api';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as fasFaHeart } from '@fortawesome/free-solid-svg-icons';
@@ -31,11 +31,17 @@ class App extends Component {
     });
 
     this.initLocalStorage();
+    this.getCatData();
+  }
 
+  /**
+   * Get data from the separate APIs
+   * Build our cat objects so we can display images and facts together
+   */
+  getCatData = () => {
     Promise.all([this.getCatFacts(), this.getCatImages()])
       .then((response) => {
         this.buildCatObjects();
-
         this.setState({
           isLoading: false,
         });
@@ -51,7 +57,7 @@ class App extends Component {
   };
 
   /** 
-   * Build cat obj using data returned from both APIs
+   * Build cat objects using data returned from both APIs
    */
   buildCatObjects = () => {
     const catObjectArray = this.state.catImages.map((imageObj, index) => {
@@ -76,71 +82,36 @@ class App extends Component {
    * Get cat images from api and set state
    */
   async getCatImages() {
-    return new Promise((resolve, reject) => {
-      var xhr = new XMLHttpRequest();
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState === 4) {
-          // Pull out XML parsing
-          let parser = new DOMParser();
-          let mlDoc = parser.parseFromString(xhr.response, "text/xml");
-          const urlNodes = mlDoc.getElementsByTagName('url');
-          const idNodes = mlDoc.getElementsByTagName('id');
-          const imgObjArray = Array.from(urlNodes).map((node, index) => {
-            return {
-              url: node.innerHTML,
-              id: idNodes[index].innerHTML,
-            };
-          });
-
-          this.setState({
-            catImages: imgObjArray
-          });
-          resolve();
-        }
-      }
-      xhr.open('GET', `${CORS_PROXY}/http://thecatapi.com/api/images/get?format=xml&results_per_page=25`, true);
-      xhr.setRequestHeader('x-api-key', CAT_API_KEY);
-      xhr.send('');
-    })
+    return fetchImages()
+      .then((response) => {
+        this.setState({
+          catImages: response
+        });
+      });
   }
 
   /**
    * Get cat facts from API and set state
    */
   async getCatFacts() {
-    return fetch(`${CORS_PROXY}/https://catfact.ninja/facts?limit=25`)
+    return fetchFacts()
       .then((response) => {
-        return response.json();
-      })
-      .then((responseJSON) => {
-        const catFactArray = responseJSON.data.map((factObj) => {
-          return factObj.fact;
-        });
-
+        const catFactArray = response.data.map((factObj) => factObj.fact);
         this.setState({
           catFacts: catFactArray
         });
-      }, (err) => {
-        alert('There was an issue getting cats.');
       });
   }
 
   /** 
-   * Sort by last word or key (to return to original sort order)
+   * Sort by last word or key
+   * We sort by key to return to original sort order
    */
   handleSortCats = (sortByLastWord) => {
     const sortParam = sortByLastWord ? 'lastWord' : 'key';
     const arrayToSort = this.state.displayFavorites ? this.state.favorites : this.state.catObjectArray;
-    let sortedCats = arrayToSort.sort((a, b) => {
-      if (a[sortParam] < b[sortParam]) {
-        return -1;
-      } else if (a[sortParam] > b[sortParam]) {
-        return 1;
-      } else {
-        return 0;
-      }
-    })
-
+    let sortedCats = arrayToSort.sort(utils.compare(sortParam));
+  
     if (this.state.displayFavorites) {
       this.setState({
         favorites: sortedCats,
@@ -150,7 +121,12 @@ class App extends Component {
         catObjectArray: sortedCats,
       });
     }
+  }
 
+  handleTitleClick = () => {
+    this.setState({
+      displayFavorites: false,
+    })
   }
 
   toggleFavorites = (displayFavorites) => {
@@ -169,11 +145,11 @@ class App extends Component {
   /** 
    * Add or remove a favorite from local strorage and update state
    */
-  handleFavoriting = (cardObject, e) => {
+  handleToggleFavorite = (cardObject, e) => {
     e.stopPropagation();
   
     let favorites = JSON.parse(localStorage.getItem('favorites'));
-    if (!utils.isFavorite(favorites, cardObject.id)) {
+    if (!utils.isFavorite(cardObject.id)) {
       const lastWord = utils.getLastWord(cardObject.fact);
 
       favorites.push({
@@ -181,7 +157,7 @@ class App extends Component {
         url: cardObject.url,
         fact: cardObject.fact,
         lastWord,
-        key: cardObject.objectKey,
+        key: favorites.length + 1,
       });
     } else {
       const index = utils.getFavoriteIndex(favorites, cardObject.id);
@@ -193,24 +169,30 @@ class App extends Component {
     this.updateFavorites(favorites);
   }
 
+
   render() {
-    if (this.state.isLoading) {
-      return (
-        <div>
-          <Loading></Loading>
-        </div>
-      );
-    } else {
-      return (
-        <div className="app">
-          <Header sortCats={this.handleSortCats} toggleFavorites={this.toggleFavorites}></Header>
-          <CatList
-            catObjects={this.state.displayFavorites ? this.state.favorites : this.state.catObjectArray}
-            handleFavoriting={this.handleFavoriting}
-            />
-        </div>
-      );
-    }
+    const { 
+      isLoading,
+      favorites, 
+      catObjectArray, 
+      displayFavorites 
+    } = this.state;
+
+    if (isLoading) return <Loading></Loading>;
+    
+    return (
+      <div className="app">
+        <Header
+          handleTitleClick={this.handleTitleClick}
+          sortCats={this.handleSortCats}
+          toggleFavorites={this.toggleFavorites}>
+        </Header>
+        <CatList
+          cats={displayFavorites ? favorites : catObjectArray}
+          handleToggleFavorite={this.handleToggleFavorite}
+          />
+      </div>
+    );
   }
 }
 

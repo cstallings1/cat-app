@@ -6,3 +6,12 @@ p {
 .padding-right-1x {
   padding-right: 1rem;
 }
+
+.hide {
+  opacity: 0;
+}
+
+.show {
+  transition: opacity .2s ease-in;
+  opacity: 1; 
+}
